@@ -1,0 +1,33 @@
+<section class="column column--<%= col.name %>" id="col-<%= col.name %>">
+  <header class="column__header">
+    <h2><%= col.name.charAt(0).toUpperCase() + col.name.slice(1) %></h2>
+    <span class="column__count"><%= col.tickets.length %></span>
+    <% if (col.name === 'ongoing' && col.atWipLimit) { %>
+      <span class="wip-badge" title="WiP limit reached">WiP limit!</span>
+    <% } %>
+  </header>
+
+  <div class="column__tickets">
+    <% for (const ticket of col.tickets) { %>
+      <%- include('ticket-card', { ticket, org, user }) %>
+    <% } %>
+  </div>
+
+  <% if (!col.atWipLimit || col.name !== 'ongoing') { %>
+    <form hx-post="/orgs/<%= org.slug %>/tickets"
+          hx-target="#col-<%= col.name %> .column__tickets"
+          hx-swap="beforeend">
+      <input type="hidden" name="column" value="<%= col.name %>">
+      <% if (col.parentOptions && col.parentOptions.length > 0) { %>
+        <select name="parent_id" required>
+          <option value="" disabled selected>— parent —</option>
+          <% for (const p of col.parentOptions) { %>
+            <option value="<%= p.id %>"><%= p.title %></option>
+          <% } %>
+        </select>
+      <% } %>
+      <input type="text" name="title" placeholder="New <%= col.name.slice(0,-1) || col.name %>…" required>
+      <button type="submit">+</button>
+    </form>
+  <% } %>
+</section>

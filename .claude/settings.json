@@ -1,0 +1,14 @@
+{
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(npm test)",
+      "Bash(npm run test:e2e)",
+      "Bash(npm run lint)",
+      "Bash(npm run db:migrate)",
+      "Bash(npx jest *)"
+    ],
+    "deny": []
+  }
+}

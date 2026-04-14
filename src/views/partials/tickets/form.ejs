@@ -1,0 +1,45 @@
+<form id="ticket-<%= ticket.id %>"
+      hx-put="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>"
+      hx-target="#ticket-<%= ticket.id %>"
+      hx-swap="outerHTML">
+
+  <label>Title
+    <input type="text" name="title" value="<%= ticket.title %>" required>
+  </label>
+
+  <label>Owner
+    <input type="text" name="owner" value="<%= ticket.owner ?? '' %>" placeholder="Assignee name">
+  </label>
+
+  <label>Status
+    <select name="status">
+      <option value="open"    <%= (ticket.status ?? 'open') === 'open'    ? 'selected' : '' %>>Open</option>
+      <option value="blocked" <%= ticket.status === 'blocked' ? 'selected' : '' %>>Blocked</option>
+      <option value="done"    <%= ticket.status === 'done'    ? 'selected' : '' %>>Done</option>
+    </select>
+  </label>
+
+  <label>Description
+    <textarea name="description"><%= ticket.description ?? '' %></textarea>
+  </label>
+
+  <% if (['possible','committed','ongoing'].includes(ticket.column)) { %>
+    <label>Action <input type="text" name="action" value="<%= ticket.action ?? '' %>"></label>
+    <label>Duration <input type="text" name="duration" value="<%= ticket.duration ?? '' %>"></label>
+    <label>Expected outcome <input type="text" name="expected_outcome" value="<%= ticket.expected_outcome ?? '' %>"></label>
+  <% } %>
+
+  <% if (ticket.column === 'review') { %>
+    <label>Hypothesis <input type="text" name="hypothesis" value="<%= ticket.hypothesis ?? '' %>"></label>
+    <label>Actual results <textarea name="actual_results"><%= ticket.actual_results ?? '' %></textarea></label>
+    <label>Learning <textarea name="learning"><%= ticket.learning ?? '' %></textarea></label>
+  <% } %>
+
+  <div class="btn-row">
+    <button type="submit">Save</button>
+    <button type="button"
+            hx-get="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/edit"
+            hx-target="#ticket-<%= ticket.id %>"
+            hx-swap="outerHTML">Cancel</button>
+  </div>
+</form>

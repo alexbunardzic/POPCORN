@@ -1,0 +1,53 @@
+<article class="ticket" id="ticket-<%= ticket.id %>">
+  <% if (ticket.parent_id && ticketMap && ticketMap[ticket.parent_id]) { %>
+    <p class="ticket__parent">↑ <%= ticketMap[ticket.parent_id].title %></p>
+  <% } %>
+
+  <header class="ticket__header">
+    <h3 class="ticket__title"><%= ticket.title %></h3>
+    <span class="ticket__status ticket__status--<%= ticket.status ?? 'open' %>"><%= ticket.status ?? 'open' %></span>
+  </header>
+
+  <% if (ticket.owner) { %>
+    <p class="ticket__meta"><span class="ticket__meta-label">Owner</span> <%= ticket.owner %></p>
+  <% } %>
+  <% if (ticket.description) { %>
+    <p class="ticket__desc"><%= ticket.description %></p>
+  <% } %>
+  <% if (ticket.action) { %><p class="ticket__meta"><span class="ticket__meta-label">Action</span> <%= ticket.action %></p><% } %>
+  <% if (ticket.hypothesis) { %><p class="ticket__meta"><span class="ticket__meta-label">Hypothesis</span> <%= ticket.hypothesis %></p><% } %>
+  <% if (ticket.actual_results) { %><p class="ticket__meta"><span class="ticket__meta-label">Results</span> <%= ticket.actual_results %></p><% } %>
+  <% if (ticket.learning) { %><p class="ticket__meta"><span class="ticket__meta-label">Learning</span> <%= ticket.learning %></p><% } %>
+
+  <p class="ticket__timestamps">
+    <span title="Created"><%= new Date(ticket.created_at).toLocaleDateString() %></span>
+    <% if (ticket.updated_at !== ticket.created_at) { %>
+      · <span title="Updated"><%= new Date(ticket.updated_at).toLocaleDateString() %></span>
+    <% } %>
+  </p>
+
+  <footer class="ticket__actions">
+    <button class="btn-move"
+            hx-patch="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/move"
+            hx-vals='{"direction":"left"}'
+            hx-swap="none">←</button>
+
+    <a href="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/edit"
+       hx-get="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/edit"
+       hx-target="#ticket-<%= ticket.id %>"
+       hx-swap="outerHTML">Edit</a>
+
+    <button class="btn-move"
+            hx-patch="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/move"
+            hx-vals='{"direction":"right"}'
+            hx-swap="none">→</button>
+
+    <% if (user.role === 'admin') { %>
+      <button class="btn-danger"
+              hx-delete="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>"
+              hx-target="#ticket-<%= ticket.id %>"
+              hx-swap="outerHTML"
+              hx-confirm="Delete this ticket?">Delete</button>
+    <% } %>
+  </footer>
+</article>

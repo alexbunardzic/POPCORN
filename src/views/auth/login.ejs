@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login — POPCORN</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="auth-page">
+    <h1>POPCORN Flow</h1>
+    <h2>Sign in</h2>
+    <% if (locals.error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+    <form method="POST" action="/auth/login">
+      <label>Organisation slug <input type="text" name="orgSlug" required pattern="[a-z0-9-]+"></label>
+      <label>Email <input type="email" name="email" required></label>
+      <label>Password <input type="password" name="password" required></label>
+      <button type="submit">Sign in</button>
+    </form>
+    <p><a href="/auth/register">Create an account</a></p>
+  </main>
+</body>
+</html>

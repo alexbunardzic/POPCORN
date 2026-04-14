@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register — POPCORN</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="auth-page">
+    <h1>POPCORN Flow</h1>
+    <h2>Create account</h2>
+    <% if (locals.error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+    <form method="POST" action="/auth/register">
+      <label>Email <input type="email" name="email" required></label>
+      <label>Password <input type="password" name="password" required></label>
+
+      <fieldset>
+        <legend>Organisation</legend>
+        <label>
+          <input type="radio" name="createOrg" value="true" id="newOrg" checked>
+          Create a new organisation
+        </label>
+        <label for="orgName">Organisation name</label>
+        <input type="text" name="orgName" id="orgName">
+        <label for="orgSlug">Organisation slug (e.g. acme)</label>
+        <input type="text" name="orgSlug" id="orgSlug" pattern="[a-z0-9-]+">
+
+        <label>
+          <input type="radio" name="createOrg" value="false" id="joinOrg">
+          Join an existing organisation
+        </label>
+        <label for="joinSlug">Organisation slug</label>
+        <input type="text" name="joinSlug" id="joinSlug">
+      </fieldset>
+
+      <button type="submit">Create account</button>
+    </form>
+    <p><a href="/auth/login">Sign in instead</a></p>
+  </main>
+</body>
+</html>

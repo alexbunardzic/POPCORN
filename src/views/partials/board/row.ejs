@@ -1,0 +1,95 @@
+<div class="board-swimlane">
+
+  <%# ── Problems cell ── %>
+  <div class="board-cell board-cell--problems">
+    <%- include('ticket-card', { ticket: row.problem, org, user, ticketMap }) %>
+  </div>
+
+  <%# ── Options cell ── %>
+  <div class="board-cell board-cell--options">
+    <% for (const ticket of row.byColumn.options) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
+      <input type="hidden" name="column" value="options">
+      <input type="hidden" name="parent_id" value="<%= row.problem.id %>">
+      <input type="text" name="title" placeholder="New option…" required>
+      <button type="submit">+</button>
+    </form>
+  </div>
+
+  <%# ── Possible cell ── %>
+  <div class="board-cell board-cell--possible">
+    <% for (const ticket of row.byColumn.possible) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <% if (row.byColumn.options.length > 0) { %>
+      <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
+        <input type="hidden" name="column" value="possible">
+        <select name="parent_id" required>
+          <option value="" disabled selected>↑ option</option>
+          <% for (const opt of row.byColumn.options) { %>
+            <option value="<%= opt.id %>"><%= opt.title %></option>
+          <% } %>
+        </select>
+        <input type="text" name="title" placeholder="New experiment…" required>
+        <button type="submit">+</button>
+      </form>
+    <% } else { %>
+      <p class="board-cell__hint">Add an option first</p>
+    <% } %>
+  </div>
+
+  <%# ── Committed cell (no add form — tickets move here) ── %>
+  <div class="board-cell board-cell--committed">
+    <% for (const ticket of row.byColumn.committed) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <% if (row.byColumn.committed.length === 0) { %>
+      <p class="board-cell__hint">← commit an experiment</p>
+    <% } %>
+  </div>
+
+  <%# ── Ongoing cell ── %>
+  <div class="board-cell board-cell--ongoing">
+    <% for (const ticket of row.byColumn.ongoing) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <% if (row.byColumn.ongoing.length === 0) { %>
+      <p class="board-cell__hint">← start running</p>
+    <% } %>
+  </div>
+
+  <%# ── Review cell ── %>
+  <div class="board-cell board-cell--review">
+    <% for (const ticket of row.byColumn.review) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <% if (row.byColumn.review.length === 0) { %>
+      <p class="board-cell__hint">← move here to review</p>
+    <% } %>
+  </div>
+
+  <%# ── Next cell ── %>
+  <div class="board-cell board-cell--next">
+    <% for (const ticket of row.byColumn.next) { %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+    <% } %>
+    <% if (row.byColumn.review.length > 0) { %>
+      <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
+        <input type="hidden" name="column" value="next">
+        <select name="parent_id" required>
+          <option value="" disabled selected>↑ review</option>
+          <% for (const rev of row.byColumn.review) { %>
+            <option value="<%= rev.id %>"><%= rev.title %></option>
+          <% } %>
+        </select>
+        <input type="text" name="title" placeholder="Next action…" required>
+        <button type="submit">+</button>
+      </form>
+    <% } else { %>
+      <p class="board-cell__hint">← complete a review first</p>
+    <% } %>
+  </div>
+
+</div>
