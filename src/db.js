@@ -1,21 +1,10 @@
-import Database from 'better-sqlite3';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { mkdirSync } from 'fs';
+import pg from 'pg';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const { Pool } = pg;
 
-function openDatabase() {
-  if (process.env.NODE_ENV === 'test') {
-    return new Database(':memory:');
-  }
-  const dataDir = join(__dirname, '..', 'data');
-  mkdirSync(dataDir, { recursive: true });
-  return new Database(join(dataDir, 'popcorn.db'));
-}
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-const db = openDatabase();
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-export { db };
+export { pool };

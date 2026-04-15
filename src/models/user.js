@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { db } from '../db.js';
+import { pool } from '../db.js';
 
 const SALT_ROUNDS = 10;
 
@@ -11,27 +11,35 @@ const CreateSchema = z.object({
   role: z.enum(['admin', 'member']),
 });
 
-export function create(input) {
+export async function create(input) {
   const data = CreateSchema.parse(input);
-  const passwordHash = bcrypt.hashSync(data.password, SALT_ROUNDS);
-  const stmt = db.prepare(
-    'INSERT INTO users (org_id, email, password_hash, role) VALUES (?, ?, ?, ?) RETURNING *'
+  const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
+  const { rows } = await pool.query(
+    'INSERT INTO users (org_id, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING *',
+    [data.orgId, data.email, passwordHash, data.role],
   );
-  return stmt.get(data.orgId, data.email, passwordHash, data.role);
+  return rows[0];
 }
 
-export function findByEmail(orgId, email) {
-  return db.prepare(
-    'SELECT * FROM users WHERE org_id = ? AND email = ?'
-  ).get(orgId, email);
+export async function findByEmail(orgId, email) {
+  const { rows } = await pool.query(
+    'SELECT * FROM users WHERE org_id = $1 AND email = $2',
+    [orgId, email],
+  );
+  return rows[0] ?? null;
 }
 
-export function findById(id) {
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+export async function findById(id) {
+  const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  return rows[0] ?? null;
 }
 
-export function findByOrg(orgId) {
-  return db.prepare('SELECT * FROM users WHERE org_id = ? ORDER BY email').all(orgId);
+export async function findByOrg(orgId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM users WHERE org_id = $1 ORDER BY email',
+    [orgId],
+  );
+  return rows;
 }
 
 export async function verifyPassword(hash, plain) {

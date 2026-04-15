@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { db } from '../db.js';
+import { pool } from '../db.js';
 
 const CreateSchema = z.object({
   name: z.string().min(1),
@@ -7,22 +7,26 @@ const CreateSchema = z.object({
   wip_limit: z.number().int().positive().default(3),
 });
 
-export function create(input) {
+export async function create(input) {
   const data = CreateSchema.parse(input);
-  const stmt = db.prepare(
-    'INSERT INTO organizations (name, slug, wip_limit) VALUES (?, ?, ?) RETURNING *'
+  const { rows } = await pool.query(
+    'INSERT INTO organizations (name, slug, wip_limit) VALUES ($1, $2, $3) RETURNING *',
+    [data.name, data.slug, data.wip_limit],
   );
-  return stmt.get(data.name, data.slug, data.wip_limit);
+  return rows[0];
 }
 
-export function findAll() {
-  return db.prepare('SELECT * FROM organizations ORDER BY name').all();
+export async function findAll() {
+  const { rows } = await pool.query('SELECT * FROM organizations ORDER BY name');
+  return rows;
 }
 
-export function findById(id) {
-  return db.prepare('SELECT * FROM organizations WHERE id = ?').get(id);
+export async function findById(id) {
+  const { rows } = await pool.query('SELECT * FROM organizations WHERE id = $1', [id]);
+  return rows[0] ?? null;
 }
 
-export function findBySlug(slug) {
-  return db.prepare('SELECT * FROM organizations WHERE slug = ?').get(slug);
+export async function findBySlug(slug) {
+  const { rows } = await pool.query('SELECT * FROM organizations WHERE slug = $1', [slug]);
+  return rows[0] ?? null;
 }

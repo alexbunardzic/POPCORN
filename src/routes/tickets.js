@@ -20,8 +20,8 @@ export const ticketsRouter = Router();
 
 const isHtmx = req => Boolean(req.headers['hx-request']);
 
-function orgGuard(req, res) {
-  const org = findBySlug(req.params.slug);
+async function orgGuard(req, res) {
+  const org = await findBySlug(req.params.slug);
   if (!org || org.id !== req.user.orgId) {
     res.status(403).render('partials/error', { message: 'Forbidden' });
     return null;
@@ -30,8 +30,8 @@ function orgGuard(req, res) {
 }
 
 // POST /orgs/:slug/tickets
-ticketsRouter.post('/:slug/tickets', authenticate, (req, res) => {
-  const org = orgGuard(req, res);
+ticketsRouter.post('/:slug/tickets', authenticate, async (req, res) => {
+  const org = await orgGuard(req, res);
   if (!org) return;
 
   const { title, column = 'problems', owner, status, parent_id, description,
@@ -46,7 +46,7 @@ ticketsRouter.post('/:slug/tickets', authenticate, (req, res) => {
     return res.status(422).render('partials/error', { message: 'Invalid column' });
   }
 
-  create({
+  await create({
     orgId: org.id,
     createdBy: req.user.id,
     parentId: parent_id ? Number(parent_id) : undefined,
@@ -60,11 +60,11 @@ ticketsRouter.post('/:slug/tickets', authenticate, (req, res) => {
 });
 
 // GET /orgs/:slug/tickets/:id/edit
-ticketsRouter.get('/:slug/tickets/:id/edit', authenticate, (req, res) => {
-  const org = orgGuard(req, res);
+ticketsRouter.get('/:slug/tickets/:id/edit', authenticate, async (req, res) => {
+  const org = await orgGuard(req, res);
   if (!org) return;
 
-  const ticket = findById(Number(req.params.id));
+  const ticket = await findById(Number(req.params.id));
   if (!ticket || ticket.org_id !== org.id) {
     return res.status(404).render('partials/error', { message: 'Ticket not found' });
   }
@@ -73,12 +73,12 @@ ticketsRouter.get('/:slug/tickets/:id/edit', authenticate, (req, res) => {
 });
 
 // PUT /orgs/:slug/tickets/:id
-ticketsRouter.put('/:slug/tickets/:id', authenticate, (req, res) => {
-  const org = orgGuard(req, res);
+ticketsRouter.put('/:slug/tickets/:id', authenticate, async (req, res) => {
+  const org = await orgGuard(req, res);
   if (!org) return;
 
   const id = Number(req.params.id);
-  const ticket = findById(id);
+  const ticket = await findById(id);
   if (!ticket || ticket.org_id !== org.id) {
     return res.status(404).render('partials/error', { message: 'Ticket not found' });
   }
@@ -86,26 +86,26 @@ ticketsRouter.put('/:slug/tickets/:id', authenticate, (req, res) => {
   const { title, owner, status, description, action, duration, expected_outcome,
           hypothesis, actual_results, learning } = req.body ?? {};
 
-  const updated = update(id, org.id, {
+  const updated = await update(id, org.id, {
     title, owner, status, description, action, duration, expected_outcome,
     hypothesis, actual_results, learning,
   });
 
-  const allTickets = findByOrg(org.id);
+  const allTickets = await findByOrg(org.id);
   const ticketMap = Object.fromEntries(allTickets.map(t => [t.id, t]));
   res.status(200).render('partials/tickets/card', { ticket: updated, org, user: req.user, ticketMap });
 });
 
 // PATCH /orgs/:slug/tickets/:id/move
-ticketsRouter.patch('/:slug/tickets/:id/move', authenticate, (req, res) => {
-  const org = orgGuard(req, res);
+ticketsRouter.patch('/:slug/tickets/:id/move', authenticate, async (req, res) => {
+  const org = await orgGuard(req, res);
   if (!org) return;
 
   const id = Number(req.params.id);
   const { direction } = req.body ?? {};
 
   try {
-    move(id, org.id, direction);
+    await move(id, org.id, direction);
     res.setHeader('HX-Trigger', 'boardChange');
     if (!isHtmx(req)) return res.redirect(303, `/orgs/${org.slug}/board`);
     res.status(200).send('');
@@ -121,13 +121,13 @@ ticketsRouter.patch('/:slug/tickets/:id/move', authenticate, (req, res) => {
 });
 
 // DELETE /orgs/:slug/tickets/:id
-ticketsRouter.delete('/:slug/tickets/:id', authenticate, requireAdmin, (req, res) => {
-  const org = orgGuard(req, res);
+ticketsRouter.delete('/:slug/tickets/:id', authenticate, requireAdmin, async (req, res) => {
+  const org = await orgGuard(req, res);
   if (!org) return;
 
   const id = Number(req.params.id);
   try {
-    remove(id, org.id);
+    await remove(id, org.id);
     res.setHeader('HX-Trigger', 'boardChange');
     if (!isHtmx(req)) return res.redirect(303, `/orgs/${org.slug}/board`);
     res.status(200).send('');

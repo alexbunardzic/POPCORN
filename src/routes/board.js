@@ -7,8 +7,8 @@ export const boardRouter = Router();
 
 const NON_PROBLEM_COLS = COLUMNS.slice(1); // options … next
 
-function buildBoardData(org) {
-  const allTickets = findByOrg(org.id);
+async function buildBoardData(org) {
+  const allTickets = await findByOrg(org.id);
   const ticketMap = Object.fromEntries(allTickets.map(t => [t.id, t]));
 
   function getRootProblemId(ticket, seen = new Set()) {
@@ -42,13 +42,13 @@ function buildBoardData(org) {
 }
 
 // GET /orgs/:slug/board
-boardRouter.get('/:slug/board', authenticate, (req, res) => {
-  const org = findBySlug(req.params.slug);
+boardRouter.get('/:slug/board', authenticate, async (req, res) => {
+  const org = await findBySlug(req.params.slug);
   if (!org || org.id !== req.user.orgId) {
     return res.status(404).render('partials/error', { message: 'Organisation not found' });
   }
 
-  const data = buildBoardData(org);
+  const data = await buildBoardData(org);
 
   if (req.headers['hx-request']) {
     return res.render('partials/board/board-inner', { ...data, org, user: req.user });

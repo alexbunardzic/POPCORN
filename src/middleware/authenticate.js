@@ -8,13 +8,13 @@ export async function authenticate(req, res, next) {
     return res.status(401).render('partials/error', { message: 'Not authenticated' });
   }
 
-  const user = findUser(userId);
+  const user = await findUser(userId);
 
   if (!user || user.org_id !== orgId) {
     return res.status(401).render('partials/error', { message: 'Not authenticated' });
   }
 
-  const org = findOrg(orgId);
+  const org = await findOrg(orgId);
 
   req.user = {
     id: user.id,

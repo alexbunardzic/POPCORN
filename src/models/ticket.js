@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { db } from '../db.js';
+import { pool } from '../db.js';
 import { findById as findOrg } from './organization.js';
 
 export const COLUMNS = [
@@ -42,111 +42,122 @@ export class NotFoundError extends Error {
   constructor(msg) { super(msg); this.name = 'NotFoundError'; }
 }
 
-export function create(input) {
+export async function create(input) {
   const data = CreateSchema.parse(input);
-  const position = db.prepare(
-    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = ? AND column = ?'
-  ).get(data.orgId, data.column).next;
+  const { rows: posRows } = await pool.query(
+    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND column = $2',
+    [data.orgId, data.column],
+  );
+  const position = posRows[0].next;
 
-  const stmt = db.prepare(`
+  const { rows } = await pool.query(`
     INSERT INTO tickets
       (org_id, created_by, parent_id, title, owner, status, description, column, position,
        action, duration, expected_outcome, hypothesis, actual_results, learning)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
-  `);
-  return stmt.get(
+  `, [
     data.orgId, data.createdBy, data.parentId ?? null,
     data.title, data.owner ?? null, data.status,
     data.description ?? null,
     data.column, position,
     data.action ?? null, data.duration ?? null, data.expected_outcome ?? null,
     data.hypothesis ?? null, data.actual_results ?? null, data.learning ?? null,
+  ]);
+  return rows[0];
+}
+
+export async function findChildren(orgId, parentId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM tickets WHERE org_id = $1 AND parent_id = $2 ORDER BY column, position',
+    [orgId, parentId],
   );
+  return rows;
 }
 
-export function findChildren(orgId, parentId) {
-  return db.prepare(
-    'SELECT * FROM tickets WHERE org_id = ? AND parent_id = ? ORDER BY column, position'
-  ).all(orgId, parentId);
+export async function findByOrg(orgId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM tickets WHERE org_id = $1 ORDER BY column, position',
+    [orgId],
+  );
+  return rows;
 }
 
-export function findByOrg(orgId) {
-  return db.prepare(
-    'SELECT * FROM tickets WHERE org_id = ? ORDER BY column, position'
-  ).all(orgId);
+export async function findByColumn(orgId, column) {
+  const { rows } = await pool.query(
+    'SELECT * FROM tickets WHERE org_id = $1 AND column = $2 ORDER BY position',
+    [orgId, column],
+  );
+  return rows;
 }
 
-export function findByColumn(orgId, column) {
-  return db.prepare(
-    'SELECT * FROM tickets WHERE org_id = ? AND column = ? ORDER BY position'
-  ).all(orgId, column);
+export async function findById(id) {
+  const { rows } = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
+  return rows[0] ?? null;
 }
 
-export function findById(id) {
-  return db.prepare('SELECT * FROM tickets WHERE id = ?').get(id);
-}
-
-export function update(id, orgId, fields) {
-  const ticket = findById(id);
+export async function update(id, orgId, fields) {
+  const ticket = await findById(id);
   if (!ticket || ticket.org_id !== orgId) throw new NotFoundError(`Ticket ${id} not found`);
 
   const safe = Object.fromEntries(
-    Object.entries(fields).filter(([k]) => ALLOWED_UPDATE_FIELDS.includes(k))
+    Object.entries(fields).filter(([k]) => ALLOWED_UPDATE_FIELDS.includes(k)),
   );
 
   if (Object.keys(safe).length === 0) return ticket;
 
-  const sets = Object.keys(safe).map(k => `${k} = ?`).join(', ');
+  const keys = Object.keys(safe);
   const values = Object.values(safe);
-  db.prepare(
-    `UPDATE tickets SET ${sets}, updated_at = datetime('now') WHERE id = ? RETURNING *`
-  ).get(...values, id);
+  const sets = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  await pool.query(
+    `UPDATE tickets SET ${sets}, updated_at = NOW() WHERE id = $${keys.length + 1}`,
+    [...values, id],
+  );
 
   return findById(id);
 }
 
-export function move(id, orgId, direction) {
-  const ticket = findById(id);
+export async function move(id, orgId, direction) {
+  const ticket = await findById(id);
   if (!ticket || ticket.org_id !== orgId) throw new NotFoundError(`Ticket ${id} not found`);
 
   const currentIndex = COLUMNS.indexOf(ticket.column);
   const targetIndex = direction === 'right' ? currentIndex + 1 : currentIndex - 1;
 
   if (targetIndex < 0 || targetIndex >= COLUMNS.length) {
-    throw new InvalidMoveError(
-      `Cannot move ${direction} from '${ticket.column}'`
-    );
+    throw new InvalidMoveError(`Cannot move ${direction} from '${ticket.column}'`);
   }
 
   const targetColumn = COLUMNS[targetIndex];
 
   if (targetColumn === 'ongoing') {
-    const org = findOrg(orgId);
+    const org = await findOrg(orgId);
     const wipLimit = org?.wip_limit ?? 3;
-    const count = db.prepare(
-      'SELECT COUNT(*) AS n FROM tickets WHERE org_id = ? AND column = ?'
-    ).get(orgId, 'ongoing').n;
-    if (count >= wipLimit) {
-      throw new WipLimitError(
-        `WiP limit of ${wipLimit} reached for 'ongoing' column`
-      );
+    const { rows } = await pool.query(
+      'SELECT COUNT(*) AS n FROM tickets WHERE org_id = $1 AND column = $2',
+      [orgId, 'ongoing'],
+    );
+    if (Number(rows[0].n) >= wipLimit) {
+      throw new WipLimitError(`WiP limit of ${wipLimit} reached for 'ongoing' column`);
     }
   }
 
-  const position = db.prepare(
-    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = ? AND column = ?'
-  ).get(orgId, targetColumn).next;
+  const { rows: posRows } = await pool.query(
+    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND column = $2',
+    [orgId, targetColumn],
+  );
+  const position = posRows[0].next;
 
-  db.prepare(
-    `UPDATE tickets SET column = ?, position = ?, updated_at = datetime('now') WHERE id = ?`
-  ).run(targetColumn, position, id);
+  await pool.query(
+    'UPDATE tickets SET column = $1, position = $2, updated_at = NOW() WHERE id = $3',
+    [targetColumn, position, id],
+  );
 
   return findById(id);
 }
 
-export function remove(id, orgId) {
-  const ticket = findById(id);
+export async function remove(id, orgId) {
+  const ticket = await findById(id);
   if (!ticket || ticket.org_id !== orgId) throw new NotFoundError(`Ticket ${id} not found`);
-  db.prepare('DELETE FROM tickets WHERE id = ?').run(id);
+  await pool.query('DELETE FROM tickets WHERE id = $1', [id]);
 }

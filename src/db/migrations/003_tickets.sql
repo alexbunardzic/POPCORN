@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS tickets (
-  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  id               SERIAL PRIMARY KEY,
   org_id           INTEGER NOT NULL REFERENCES organizations(id),
   created_by       INTEGER NOT NULL REFERENCES users(id),
   title            TEXT    NOT NULL,
@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS tickets (
   hypothesis       TEXT,
   actual_results   TEXT,
   learning         TEXT,
-  created_at       TEXT    NOT NULL DEFAULT (datetime('now')),
-  updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

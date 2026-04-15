@@ -11,7 +11,6 @@ function renderError(req, res, status, message) {
   if (isHtmx(req)) {
     return res.status(status).render('partials/error', { message });
   }
-  // Re-render the relevant full page with the error
   const view = req.path.includes('register') ? 'auth/register' : 'auth/login';
   return res.status(status).render(view, { error: message });
 }
@@ -34,10 +33,10 @@ authRouter.post('/login', async (req, res) => {
     return renderError(req, res, 422, 'Email, password, and organisation slug are required');
   }
 
-  const org = findBySlug(orgSlug);
+  const org = await findBySlug(orgSlug);
   if (!org) return renderError(req, res, 422, 'Invalid credentials');
 
-  const user = findByEmail(org.id, email);
+  const user = await findByEmail(org.id, email);
   if (!user) return renderError(req, res, 422, 'Invalid credentials');
 
   const ok = await verifyPassword(user.password_hash, password);
@@ -71,7 +70,7 @@ authRouter.post('/register', async (req, res) => {
       return renderError(req, res, 422, 'Organisation name and slug are required');
     }
     try {
-      org = createOrg({ name: orgName, slug: orgSlug });
+      org = await createOrg({ name: orgName, slug: orgSlug });
     } catch (err) {
       const message = err instanceof ZodError
         ? err.errors[0].message
@@ -80,13 +79,13 @@ authRouter.post('/register', async (req, res) => {
     }
     role = 'admin';
   } else {
-    org = findBySlug(joinSlug);
+    org = await findBySlug(joinSlug);
     if (!org) return renderError(req, res, 422, 'Organisation not found');
     role = 'member';
   }
 
   try {
-    const user = createUser({ orgId: org.id, email, password, role });
+    const user = await createUser({ orgId: org.id, email, password, role });
     req.session.userId = user.id;
     req.session.orgId = org.id;
   } catch {
