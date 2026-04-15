@@ -7,10 +7,6 @@
     <input type="text" name="title" value="<%= ticket.title %>" required>
   </label>
 
-  <label>Owner
-    <input type="text" name="owner" value="<%= ticket.owner ?? '' %>" placeholder="Assignee name">
-  </label>
-
   <label>Status
     <select name="status">
       <option value="open"    <%= (ticket.status ?? 'open') === 'open'    ? 'selected' : '' %>>Open</option>

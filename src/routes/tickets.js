@@ -35,7 +35,7 @@ ticketsRouter.post('/:slug/tickets', authenticate, async (req, res) => {
   const org = await orgGuard(req, res);
   if (!org) return;
 
-  const { title, column = 'problems', owner, status, parent_id, description,
+  const { title, column = 'problems', status, parent_id, description,
           action, duration, expected_outcome, hypothesis, actual_results, learning } = req.body ?? {};
 
   if (!title) {
@@ -51,7 +51,7 @@ ticketsRouter.post('/:slug/tickets', authenticate, async (req, res) => {
     orgId: org.id,
     createdBy: req.user.id,
     parentId: parent_id ? Number(parent_id) : undefined,
-    title, column, owner, status, description, action, duration,
+    title, column, owner: req.user.email, status, description, action, duration,
     expected_outcome, hypothesis, actual_results, learning,
   });
 
@@ -84,11 +84,11 @@ ticketsRouter.put('/:slug/tickets/:id', authenticate, async (req, res) => {
     return res.status(404).render('partials/error', { message: 'Ticket not found' });
   }
 
-  const { title, owner, status, description, action, duration, expected_outcome,
+  const { title, status, description, action, duration, expected_outcome,
           hypothesis, actual_results, learning } = req.body ?? {};
 
   const updated = await update(id, org.id, {
-    title, owner, status, description, action, duration, expected_outcome,
+    title, status, description, action, duration, expected_outcome,
     hypothesis, actual_results, learning,
   });
 

@@ -26,7 +26,7 @@ const CreateSchema = z.object({
 });
 
 const ALLOWED_UPDATE_FIELDS = [
-  'title', 'owner', 'status', 'description', 'action', 'duration',
+  'title', 'status', 'description', 'action', 'duration',
   'expected_outcome', 'hypothesis', 'actual_results', 'learning',
 ];
 
