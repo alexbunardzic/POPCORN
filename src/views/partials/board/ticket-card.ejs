@@ -42,20 +42,24 @@
   <% } %>
 
   <footer class="ticket__actions">
+    <% if (ticket.column !== 'problems') { %>
     <button class="btn-move"
             hx-patch="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/move"
             hx-vals='{"direction":"left"}'
             hx-swap="none">←</button>
+    <% } %>
 
     <a href="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/edit"
        hx-get="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/edit"
        hx-target="#ticket-<%= ticket.id %>"
        hx-swap="outerHTML">Edit</a>
 
+    <% if (ticket.column !== 'problems') { %>
     <button class="btn-move"
             hx-patch="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/move"
             hx-vals='{"direction":"right"}'
             hx-swap="none">→</button>
+    <% } %>
 
     <% if (user.role === 'admin') { %>
       <button class="btn-danger"
