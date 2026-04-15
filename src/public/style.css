@@ -377,33 +377,50 @@ header nav form button:hover { background: var(--danger); color: #fff; border-co
 /* Add-problem row */
 .board-add-problem {
   grid-column: 1 / -1;
-  padding: 0.75rem 1rem;
-  border-top: 1px dashed var(--border);
+  padding: 1rem 1rem;
+  background: var(--surface);
+  border-top: 2px solid var(--col-problems);
 }
 
 .board-add-problem form {
   display: flex;
   gap: 0.5rem;
-  max-width: 480px;
+  max-width: 520px;
 }
 
 .board-add-problem input[type="text"] {
   flex: 1;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  border-color: var(--col-problems);
+}
+
+.board-add-problem input[type="text"]:focus {
+  border-color: var(--col-problems);
+  box-shadow: 0 0 0 3px #ff6b9d30;
 }
 
 .board-add-problem button[type="submit"] {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
+  background: var(--col-problems);
+  color: #fff;
+  border: none;
   width: auto;
-  padding: 0.5rem 1rem;
+  padding: 0.55rem 1.1rem;
   font-size: 0.875rem;
   box-shadow: none;
 }
 
 .board-add-problem button[type="submit"]:hover {
-  background: var(--accent-glow);
+  background: #ff4f8b;
+}
+
+/* Empty board state */
+.board-empty {
+  grid-column: 1 / -1;
+  padding: 3rem 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
 /* Hint text in empty cells */

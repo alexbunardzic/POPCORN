@@ -18,6 +18,13 @@
     <%- include('row', { row: rows[i], org, user, wipCount, wipLimit, ticketMap }) %>
   <% } %>
 
+  <%# ── Empty state ── %>
+  <% if (rows.length === 0) { %>
+  <div class="board-empty">
+    <p>No problems yet. Add your first problem below to get started.</p>
+  </div>
+  <% } %>
+
   <%# ── Add problem ── %>
   <div class="board-add-problem">
     <form hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
