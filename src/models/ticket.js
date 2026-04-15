@@ -45,14 +45,14 @@ export class NotFoundError extends Error {
 export async function create(input) {
   const data = CreateSchema.parse(input);
   const { rows: posRows } = await pool.query(
-    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND column = $2',
+    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND "column" = $2',
     [data.orgId, data.column],
   );
   const position = posRows[0].next;
 
   const { rows } = await pool.query(`
     INSERT INTO tickets
-      (org_id, created_by, parent_id, title, owner, status, description, column, position,
+      (org_id, created_by, parent_id, title, owner, status, description, "column", position,
        action, duration, expected_outcome, hypothesis, actual_results, learning)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING *
@@ -69,7 +69,7 @@ export async function create(input) {
 
 export async function findChildren(orgId, parentId) {
   const { rows } = await pool.query(
-    'SELECT * FROM tickets WHERE org_id = $1 AND parent_id = $2 ORDER BY column, position',
+    'SELECT * FROM tickets WHERE org_id = $1 AND parent_id = $2 ORDER BY "column", position',
     [orgId, parentId],
   );
   return rows;
@@ -77,7 +77,7 @@ export async function findChildren(orgId, parentId) {
 
 export async function findByOrg(orgId) {
   const { rows } = await pool.query(
-    'SELECT * FROM tickets WHERE org_id = $1 ORDER BY column, position',
+    'SELECT * FROM tickets WHERE org_id = $1 ORDER BY "column", position',
     [orgId],
   );
   return rows;
@@ -85,7 +85,7 @@ export async function findByOrg(orgId) {
 
 export async function findByColumn(orgId, column) {
   const { rows } = await pool.query(
-    'SELECT * FROM tickets WHERE org_id = $1 AND column = $2 ORDER BY position',
+    'SELECT * FROM tickets WHERE org_id = $1 AND "column" = $2 ORDER BY position',
     [orgId, column],
   );
   return rows;
@@ -134,7 +134,7 @@ export async function move(id, orgId, direction) {
     const org = await findOrg(orgId);
     const wipLimit = org?.wip_limit ?? 3;
     const { rows } = await pool.query(
-      'SELECT COUNT(*) AS n FROM tickets WHERE org_id = $1 AND column = $2',
+      'SELECT COUNT(*) AS n FROM tickets WHERE org_id = $1 AND "column" = $2',
       [orgId, 'ongoing'],
     );
     if (Number(rows[0].n) >= wipLimit) {
@@ -143,13 +143,13 @@ export async function move(id, orgId, direction) {
   }
 
   const { rows: posRows } = await pool.query(
-    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND column = $2',
+    'SELECT COALESCE(MAX(position) + 1, 0) AS next FROM tickets WHERE org_id = $1 AND "column" = $2',
     [orgId, targetColumn],
   );
   const position = posRows[0].next;
 
   await pool.query(
-    'UPDATE tickets SET column = $1, position = $2, updated_at = NOW() WHERE id = $3',
+    'UPDATE tickets SET "column" = $1, position = $2, updated_at = NOW() WHERE id = $3',
     [targetColumn, position, id],
   );
 

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   created_by       INTEGER NOT NULL REFERENCES users(id),
   title            TEXT    NOT NULL,
   description      TEXT,
-  column           TEXT    NOT NULL CHECK(column IN (
+  "column"         TEXT    NOT NULL CHECK("column" IN (
                      'problems','options','possible','committed',
                      'ongoing','review','next')),
   position         INTEGER NOT NULL DEFAULT 0,
