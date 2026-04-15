@@ -2,13 +2,13 @@
 
   <%# ── Problems cell ── %>
   <div class="board-cell board-cell--problems">
-    <%- include('ticket-card', { ticket: row.problem, org, user, ticketMap }) %>
+    <%- include('ticket-card', { ticket: row.problem, org, user, ticketMap, voteCounts, userVotedIds }) %>
   </div>
 
   <%# ── Options cell ── %>
   <div class="board-cell board-cell--options">
     <% for (const ticket of row.byColumn.options) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
       <input type="hidden" name="column" value="options">
@@ -21,7 +21,7 @@
   <%# ── Possible cell ── %>
   <div class="board-cell board-cell--possible">
     <% for (const ticket of row.byColumn.possible) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <% if (row.byColumn.options.length > 0) { %>
       <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">
@@ -43,7 +43,7 @@
   <%# ── Committed cell (no add form — tickets move here) ── %>
   <div class="board-cell board-cell--committed">
     <% for (const ticket of row.byColumn.committed) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <% if (row.byColumn.committed.length === 0) { %>
       <p class="board-cell__hint">← commit an experiment</p>
@@ -53,7 +53,7 @@
   <%# ── Ongoing cell ── %>
   <div class="board-cell board-cell--ongoing">
     <% for (const ticket of row.byColumn.ongoing) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <% if (row.byColumn.ongoing.length === 0) { %>
       <p class="board-cell__hint">← start running</p>
@@ -63,7 +63,7 @@
   <%# ── Review cell ── %>
   <div class="board-cell board-cell--review">
     <% for (const ticket of row.byColumn.review) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <% if (row.byColumn.review.length === 0) { %>
       <p class="board-cell__hint">← move here to review</p>
@@ -73,7 +73,7 @@
   <%# ── Next cell ── %>
   <div class="board-cell board-cell--next">
     <% for (const ticket of row.byColumn.next) { %>
-      <%- include('ticket-card', { ticket, org, user, ticketMap }) %>
+      <%- include('ticket-card', { ticket, org, user, ticketMap, voteCounts, userVotedIds }) %>
     <% } %>
     <% if (row.byColumn.review.length > 0) { %>
       <form class="cell-add-form" hx-post="/orgs/<%= org.slug %>/tickets" hx-swap="none">

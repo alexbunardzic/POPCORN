@@ -630,6 +630,56 @@ select:focus {
   text-decoration: none;
 }
 
+/* ── Vote button ─────────────────────────────────────────────────────────── */
+.ticket__votes {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.ticket__votes form { display: inline; }
+
+.btn-vote {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  box-shadow: none;
+  width: auto;
+}
+
+.btn-vote:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--text);
+  transform: none;
+}
+
+.btn-vote--active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.btn-vote--active:hover {
+  background: #ff4d6d18;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.vote-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 /* ── Edit form (inline in ticket) ────────────────────────────────────────── */
 form#ticket-form,
 form[id^="ticket-"] {

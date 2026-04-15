@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import { findBySlug } from '../models/organization.js';
+import { toggle as toggleVote, countsByOrg, votedByUser } from '../models/vote.js';
 import {
   create,
   findById,
@@ -91,9 +92,13 @@ ticketsRouter.put('/:slug/tickets/:id', authenticate, async (req, res) => {
     hypothesis, actual_results, learning,
   });
 
-  const allTickets = await findByOrg(org.id);
+  const [allTickets, voteCounts, userVotedIds] = await Promise.all([
+    findByOrg(org.id),
+    countsByOrg(org.id),
+    votedByUser(org.id, req.user.id),
+  ]);
   const ticketMap = Object.fromEntries(allTickets.map(t => [t.id, t]));
-  res.status(200).render('partials/tickets/card', { ticket: updated, org, user: req.user, ticketMap });
+  res.status(200).render('partials/tickets/card', { ticket: updated, org, user: req.user, ticketMap, voteCounts, userVotedIds });
 });
 
 // PATCH /orgs/:slug/tickets/:id/move
@@ -118,6 +123,24 @@ ticketsRouter.patch('/:slug/tickets/:id/move', authenticate, async (req, res) =>
     }
     throw err;
   }
+});
+
+// POST /orgs/:slug/tickets/:id/vote
+ticketsRouter.post('/:slug/tickets/:id/vote', authenticate, async (req, res) => {
+  const org = await orgGuard(req, res);
+  if (!org) return;
+
+  const id = Number(req.params.id);
+  const ticket = await findById(id);
+  if (!ticket || ticket.org_id !== org.id) {
+    return res.status(404).render('partials/error', { message: 'Ticket not found' });
+  }
+
+  await toggleVote(id, req.user.id);
+
+  res.setHeader('HX-Trigger', 'boardChange');
+  if (!isHtmx(req)) return res.redirect(303, `/orgs/${org.slug}/board`);
+  res.status(200).send('');
 });
 
 // DELETE /orgs/:slug/tickets/:id

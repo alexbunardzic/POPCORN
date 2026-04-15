@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS votes (
+  id         SERIAL PRIMARY KEY,
+  ticket_id  INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  user_id    INTEGER NOT NULL REFERENCES users(id)   ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(ticket_id, user_id)
+);

@@ -26,6 +26,21 @@
     <% } %>
   </p>
 
+  <%# ── Voting (Problems, Options, Possible only) ── %>
+  <% const VOTABLE = ['problems', 'options', 'possible']; %>
+  <% if (VOTABLE.includes(ticket.column)) { %>
+    <% const voteCount = (voteCounts && voteCounts[ticket.id]) || 0; %>
+    <% const hasVoted = userVotedIds instanceof Set ? userVotedIds.has(ticket.id) : false; %>
+    <div class="ticket__votes">
+      <form hx-post="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/vote" hx-swap="none">
+        <button type="submit" class="btn-vote<%= hasVoted ? ' btn-vote--active' : '' %>"
+                title="<%= hasVoted ? 'Remove vote' : 'Upvote' %>">
+          👍<% if (voteCount > 0) { %> <span class="vote-count"><%= voteCount %></span><% } %>
+        </button>
+      </form>
+    </div>
+  <% } %>
+
   <footer class="ticket__actions">
     <button class="btn-move"
             hx-patch="/orgs/<%= org.slug %>/tickets/<%= ticket.id %>/move"
